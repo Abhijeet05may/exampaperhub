@@ -9,12 +9,6 @@ interface QuestionListProps {
 }
 
 export default function QuestionList({ initialQuestions }: QuestionListProps) {
-    // In Phase 6, we'll hook this up to the paper bucket store
-    const handleAddToPaper = (question: any) => {
-        console.log('Add to paper:', question.id)
-        // alert('Added to bucket (functionality coming in Phase 6)')
-    }
-
     if (!initialQuestions || initialQuestions.length === 0) {
         return (
             <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
@@ -31,7 +25,6 @@ export default function QuestionList({ initialQuestions }: QuestionListProps) {
                 <QuestionCard
                     key={q.id}
                     question={q}
-                    onAddToPaper={handleAddToPaper}
                 />
             ))}
         </div>

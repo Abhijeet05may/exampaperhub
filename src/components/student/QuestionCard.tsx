@@ -1,13 +1,18 @@
 
-import { Check, Plus, AlertCircle } from 'lucide-react'
+'use client'
+
+import { Check, Plus } from 'lucide-react'
+import { usePaperBucket } from '@/store/paperBucket'
 
 interface QuestionCardProps {
     question: any
-    onAddToPaper?: (question: any) => void
-    isSelected?: boolean
 }
 
-export default function QuestionCard({ question, onAddToPaper, isSelected }: QuestionCardProps) {
+export default function QuestionCard({ question }: QuestionCardProps) {
+    const { questions, addQuestion, removeQuestion } = usePaperBucket()
+
+    const isSelected = questions.some(q => q.id === question.id)
+
     const getDifficultyColor = (diff: string) => {
         switch (diff) {
             case 'easy': return 'bg-green-100 text-green-800'
@@ -17,8 +22,16 @@ export default function QuestionCard({ question, onAddToPaper, isSelected }: Que
         }
     }
 
+    const handleToggle = () => {
+        if (isSelected) {
+            removeQuestion(question.id)
+        } else {
+            addQuestion(question)
+        }
+    }
+
     return (
-        <div className={`bg-white rounded-lg shadow-sm border p-4 transition-all ${isSelected ? 'border-indigo-500 ring-1 ring-indigo-500' : 'hover:border-gray-300'}`}>
+        <div className={`bg-white rounded-lg shadow-sm border p-4 transition-all duration-200 ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-500 bg-indigo-50/10' : 'hover:border-gray-300'}`}>
             <div className="flex justify-between items-start mb-3">
                 <div className="flex gap-2">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getDifficultyColor(question.difficulty)}`}>
@@ -29,10 +42,9 @@ export default function QuestionCard({ question, onAddToPaper, isSelected }: Que
                     </span>
                 </div>
                 <button
-                    onClick={() => onAddToPaper && onAddToPaper(question)}
-                    disabled={isSelected}
+                    onClick={handleToggle}
                     className={`inline-flex items-center p-1.5 rounded-md text-sm font-medium transition-colors ${isSelected
-                            ? 'bg-green-100 text-green-700 cursor-default'
+                            ? 'bg-indigo-600 text-white hover:bg-indigo-700'
                             : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
                         }`}
                 >
