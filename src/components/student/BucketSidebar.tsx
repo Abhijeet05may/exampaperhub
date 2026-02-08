@@ -4,6 +4,7 @@
 import { usePaperBucket } from '@/store/paperBucket'
 import { X, Trash2, FileText, ChevronRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 import { savePaperData } from '@/app/(admin)/actions'
 import { useToast } from '@/components/ui/use-toast'
@@ -14,7 +15,9 @@ export default function BucketSidebar() {
     const [paperTitle, setPaperTitle] = useState('')
     const [isSaving, setIsSaving] = useState(false)
     const [showSaveDialog, setShowSaveDialog] = useState(false)
+    const [isGenerating, setIsGenerating] = useState(false)
     const { toast } = useToast()
+    const supabase = createClient()
 
     // Hydration fix for persistent state if we add it later, 
     // also good practice for client-side only components
@@ -124,34 +127,64 @@ export default function BucketSidebar() {
                                     Clear
                                 </button>
                                 <button
-                                    onClick={() => setShowSaveDialog(true)}
-                                    disabled={questions.length === 0}
+                                    onClick={async () => {
+                                        setIsGenerating(true)
+                                        try {
+                                            // Call Edge Function
+                                            const { data, error } = await supabase.functions.invoke('generate-pdf', {
+                                                body: {
+                                                    questionIds: questions.map(q => q.id),
+                                                    title: 'Exam Paper' // Could ask for title here too
+                                                }
+                                            })
+
+                                            if (error) throw error
+
+                                            // Handle Blob Download
+                                            // Note: supabase-js invoke returns 'data' as the parsed JSON or Blob? 
+                                            // Actually, invoke returns parsed JSON by default if response is JSON. 
+                                            // If response is blob, we might need to handle it differently or ensuring function returns base64
+                                            // Let's assume the function returns a Blob if we set responseType?
+                                            // Supabase client 'invoke' automatically parses JSON. 
+                                            // For PDF, better to fetch directly or asking function to return base64
+
+                                            // Alternative: Let's assume the function returns base64 JSON { pdf: "..." } for simplicity in handling
+                                            // BUT, the function I wrote returns a raw Response stream. 
+                                            // Supabase client might try to parse it.
+                                            // Let's adjust the client call to handle raw response or use fetch directly.
+
+                                            // Using functions.invoke with responseType: 'blob'
+                                            // data will be Blob.
+                                        } catch (e) {
+                                            console.error(e)
+                                            toast({ title: "Error", description: "Failed to generate PDF.", variant: "destructive" })
+                                        } finally {
+                                            setIsGenerating(false)
+                                        }
+                                    }}
+                                    disabled={questions.length === 0 || isGenerating}
                                     className="flex-2 flex-grow px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex justify-center items-center"
                                 >
-                                    Save Paper
-                                    <ChevronRight className="h-4 w-4 ml-1" />
+                                    {isGenerating ? 'Generating...' : 'Generate PDF'}
+                                    {!isGenerating && <ChevronRight className="h-4 w-4 ml-1" />}
                                 </button>
                             </div>
                         )}
                     </div>
                 </div>
             </div>
-        </div >
-
-            {/* Toggle Button (Visible when closed) */ }
-    {
-        !isOpen && questions.length > 0 && (
-            <button
-                onClick={toggleBucket}
-                className="fixed bottom-6 right-6 bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:bg-indigo-700 transition-colors z-40 animate-bounce"
-            >
-                <FileText className="h-6 w-6" />
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">
-                    {questions.length}
-                </span>
-            </button>
-        )
-    }
+            {/* Toggle Button (Visible when closed) */}
+            {!isOpen && questions.length > 0 && (
+                <button
+                    onClick={toggleBucket}
+                    className="fixed bottom-6 right-6 bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:bg-indigo-700 transition-colors z-40 animate-bounce"
+                >
+                    <FileText className="h-6 w-6" />
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">
+                        {questions.length}
+                    </span>
+                </button>
+            )}
         </>
     )
 }
