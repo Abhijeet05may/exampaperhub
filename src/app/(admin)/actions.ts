@@ -5,74 +5,81 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-// ... existing category actions ...
-export async function createClass(formData: FormData) {
+export async function createCategory(prevState: any, formData: FormData) {
     const supabase = createClient()
     const name = formData.get('name') as string
-    const { error } = await supabase.from('classes').insert({ name })
-    if (error) throw error
+    const type = formData.get('type') as string // 'classes', 'subjects', etc.
+    const parentId = formData.get('parentId') as string
+
+    if (!name || !type) {
+        return { message: 'Name and Type are required' }
+    }
+
+    const payload: any = { name }
+
+    // Logic to handle parent referencing depending on type hierarchy
+    if (type === 'subjects' && parentId) payload.class_id = parentId
+    if (type === 'chapters' && parentId) payload.subject_id = parentId
+    if (type === 'topics' && parentId) payload.chapter_id = parentId
+
+    const { error } = await supabase.from(type).insert(payload)
+
+    if (error) {
+        return { message: 'Failed to create category: ' + error.message }
+    }
+
     revalidatePath('/admin/categories')
+    return { message: 'Category created successfully' }
 }
 
-export async function createSubject(formData: FormData) {
-    const supabase = createClient()
-    const name = formData.get('name') as string
-    const classId = formData.get('classId') as string
-    const { error } = await supabase.from('subjects').insert({ name, class_id: classId })
-    if (error) throw error
-    revalidatePath('/admin/categories')
-}
-
-export async function createChapter(formData: FormData) {
-    const supabase = createClient()
-    const name = formData.get('name') as string
-    const subjectId = formData.get('subjectId') as string
-    const { error } = await supabase.from('chapters').insert({ name, subject_id: subjectId })
-    if (error) throw error
-    revalidatePath('/admin/categories')
-}
-
-export async function createTopic(formData: FormData) {
-    const supabase = createClient()
-    const name = formData.get('name') as string
-    const chapterId = formData.get('chapterId') as string
-    const { error } = await supabase.from('topics').insert({ name, chapter_id: chapterId })
-    if (error) throw error
-    revalidatePath('/admin/categories')
-}
-
-export async function deleteCategory(type: 'classes' | 'subjects' | 'chapters' | 'topics', id: string) {
+export async function deleteCategory(type: string, id: string) {
     const supabase = createClient()
     const { error } = await supabase.from(type).delete().eq('id', id)
     if (error) throw error
     revalidatePath('/admin/categories')
 }
 
-// Question Actions
 export async function createQuestion(formData: FormData) {
     const supabase = createClient()
 
-    const question = {
-        question_text: formData.get('question_text') as string,
-        option_a: formData.get('option_a') as string,
-        option_b: formData.get('option_b') as string,
-        option_c: formData.get('option_c') as string,
-        option_d: formData.get('option_d') as string,
-        correct_answer: formData.get('correct_answer') as string,
-        explanation: formData.get('explanation') as string,
-        difficulty: formData.get('difficulty') as string,
-        class_id: formData.get('class_id') as string,
-        subject_id: formData.get('subject_id') as string,
-        chapter_id: formData.get('chapter_id') as string,
-        topic_id: formData.get('topic_id') as string,
-        image_url: formData.get('image_url') as string || null,
+    const question_text = formData.get('question_text') as string
+    const option_a = formData.get('option_a') as string
+    const option_b = formData.get('option_b') as string
+    const option_c = formData.get('option_c') as string
+    const option_d = formData.get('option_d') as string
+    const correct_answer = formData.get('correct_answer') as string
+    const difficulty = formData.get('difficulty') as string
+    const explanation = formData.get('explanation') as string
+
+    const class_id = formData.get('class_id') as string
+    const subject_id = formData.get('subject_id') as string
+    const chapter_id = formData.get('chapter_id') as string
+    const topic_id = formData.get('topic_id') as string
+    const image_url = formData.get('image_url') as string
+
+    if (!question_text || !correct_answer || !class_id) {
+        throw new Error('Missing required fields')
     }
 
-    const { error } = await supabase.from('questions').insert(question)
+    const { error } = await supabase.from('questions').insert({
+        question_text,
+        option_a,
+        option_b,
+        option_c,
+        option_d,
+        correct_answer,
+        difficulty,
+        explanation,
+        class_id,
+        subject_id,
+        chapter_id,
+        topic_id,
+        image_url
+    })
 
     if (error) {
         console.error('Error creating question:', error)
-        throw error
+        throw new Error('Failed to create question')
     }
 
     revalidatePath('/admin/questions')
@@ -84,4 +91,27 @@ export async function deleteQuestion(id: string) {
     const { error } = await supabase.from('questions').delete().eq('id', id)
     if (error) throw error
     revalidatePath('/admin/questions')
+}
+
+export async function savePaperData(name: string, questionIds: string[]) {
+    const supabase = createClient()
+
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const { error } = await supabase.from('saved_papers').insert({
+        user_id: user.id,
+        title: name,
+        questions: questionIds, // Storing as JSON array
+        created_at: new Date().toISOString()
+    })
+
+    if (error) {
+        console.error('Error saving paper:', error)
+        throw new Error('Failed to save paper')
+    }
+
+    revalidatePath('/saved-papers')
+    return { success: true }
 }
