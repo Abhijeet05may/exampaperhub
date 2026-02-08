@@ -1,0 +1,97 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  admin
+  student
+}
+
+enum Difficulty {
+  easy
+  medium
+  hard
+}
+
+model user_roles {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @unique @db.Uuid
+  role       Role
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model classes {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String     @unique
+  created_at DateTime   @default(now()) @db.Timestamptz(6)
+  subjects   subjects[]
+  questions  questions[]
+}
+
+model subjects {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  class_id   String     @db.Uuid
+  created_at DateTime   @default(now()) @db.Timestamptz(6)
+  class      classes    @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  chapters   chapters[]
+  questions  questions[]
+}
+
+model chapters {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  subject_id String     @db.Uuid
+  created_at DateTime   @default(now()) @db.Timestamptz(6)
+  subject    subjects   @relation(fields: [subject_id], references: [id], onDelete: Cascade)
+  topics     topics[]
+  questions  questions[]
+}
+
+model topics {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  chapter_id String     @db.Uuid
+  created_at DateTime   @default(now()) @db.Timestamptz(6)
+  chapter    chapters   @relation(fields: [chapter_id], references: [id], onDelete: Cascade)
+  questions  questions[]
+}
+
+model questions {
+  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question_text  String
+  option_a       String
+  option_b       String
+  option_c       String
+  option_d       String
+  correct_answer String     // 'A' | 'B' | 'C' | 'D'
+  explanation    String?
+  difficulty     Difficulty?
+  image_url      String?
+  class_id       String?    @db.Uuid
+  subject_id     String?    @db.Uuid
+  chapter_id     String?    @db.Uuid
+  topic_id       String?    @db.Uuid
+  created_at     DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime   @default(now()) @db.Timestamptz(6)
+
+  class    classes?  @relation(fields: [class_id], references: [id])
+  subject  subjects? @relation(fields: [subject_id], references: [id])
+  chapter  chapters? @relation(fields: [chapter_id], references: [id])
+  topic    topics?   @relation(fields: [topic_id], references: [id])
+}
+
+model saved_papers {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String   @db.Uuid
+  name         String
+  question_ids String[] @db.Uuid
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+}
