@@ -7,19 +7,19 @@ export function QuickActions() {
         {
             title: "Upload DOCX",
             icon: Upload,
-            href: "/admin/upload",
+            href: "/admin/content/upload",
             color: "text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-200"
         },
         {
             title: "Add Question",
             icon: FileText,
-            href: "/admin/questions/new",
+            href: "/admin/content/questions/new",
             color: "text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border-emerald-200"
         },
         {
             title: "Review Queue",
             icon: CheckSquare,
-            href: "/admin/reviews",
+            href: "/admin/content/review",
             color: "text-amber-600 bg-amber-50 hover:bg-amber-100 border-amber-200"
         },
         {

@@ -92,7 +92,7 @@ export function PreviewDrawer({ open, onOpenChange, item }: PreviewDrawerProps) 
 
                 <SheetFooter className="pt-4 border-t flex gap-2 sm:justify-between">
                     <div className="flex gap-2 w-full">
-                        <Link href={`/admin/questions/${item.id}`} className="w-full">
+                        <Link href={`/admin/content/questions/${item.id}`} className="w-full">
                             <Button variant="outline" className="w-full">
                                 <Edit className="mr-2 h-4 w-4" /> Edit
                             </Button>

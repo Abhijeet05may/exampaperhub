@@ -79,7 +79,7 @@ export default function NewQuestionPage() {
                 title: "Success",
                 description: "Question created successfully and sent for review.",
             })
-            router.push('/admin/questions')
+            router.push('/admin/content/questions')
         }
         setLoading(false)
     }

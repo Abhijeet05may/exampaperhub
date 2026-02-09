@@ -16,7 +16,32 @@ export default function QuestionForm() {
     const [loading, setLoading] = useState(false)
     const [imageUrl, setImageUrl] = useState('')
     const [uploading, setUploading] = useState(false)
+    const [formData, setFormData] = useState({
+        question_text: '',
+        explanation: ''
+    })
     const supabase = createClient()
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        setLoading(true)
+
+        try {
+            const form = new FormData(e.currentTarget)
+            // Manually append rich text content since it's state-controlled
+            form.set('question_text', formData.question_text)
+            form.set('explanation', formData.explanation)
+
+            await createQuestion(form)
+            alert('Question created successfully!')
+            // Reset form or redirect?
+        } catch (error) {
+            console.error('Error creating question:', error)
+            alert('Failed to create question.')
+        } finally {
+            setLoading(false)
+        }
+    }
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return

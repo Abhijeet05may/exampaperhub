@@ -24,12 +24,12 @@ export function ContentToolbar() {
                 <Button variant="outline" size="sm" className="hidden sm:flex">
                     <Download className="mr-2 h-4 w-4" /> Export
                 </Button>
-                <Link href="/admin/questions/new">
+                <Link href="/admin/content/questions/new">
                     <Button variant="outline" size="sm">
                         <Plus className="mr-2 h-4 w-4" /> Add Manual
                     </Button>
                 </Link>
-                <Link href="/admin/upload">
+                <Link href="/admin/content/upload">
                     <Button size="sm">
                         <Upload className="mr-2 h-4 w-4" /> Upload
                     </Button>

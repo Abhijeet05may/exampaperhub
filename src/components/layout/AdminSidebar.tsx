@@ -10,7 +10,7 @@ import {
     Upload,
     Users,
     Settings,
-    Image,
+    Image as ImageIcon,
     BookOpen,
     BarChart,
     ChevronLeft,
@@ -75,11 +75,11 @@ const sidebarGroups: SidebarGroupType[] = [
     {
         title: "Content Management",
         items: [
-            { title: "Upload Center", href: "/admin/upload", icon: Upload },
-            { title: "Processing Queue", href: "/admin/queue", icon: Layers, badge: "Beta" },
-            { title: "Question Bank", href: "/admin/questions", icon: Library },
-            { title: "Add Manual", href: "/admin/questions/new", icon: PlusCircle },
-            { title: "Review Queue", href: "/admin/reviews", icon: ListTodo, badge: "12" },
+            { title: "Upload Center", href: "/admin/content/upload", icon: Upload },
+            { title: "Processing Queue", href: "/admin/content/processing", icon: Layers, badge: "Beta" },
+            { title: "Question Bank", href: "/admin/content/questions", icon: Library },
+            { title: "Add Manual", href: "/admin/content/questions/new", icon: PlusCircle },
+            { title: "Review Queue", href: "/admin/content/review", icon: ListTodo, badge: "12" },
         ]
     },
     {
@@ -93,7 +93,7 @@ const sidebarGroups: SidebarGroupType[] = [
         items: [
             { title: "Templates", href: "/admin/templates", icon: FileText },
             { title: "Marking Rules", href: "/admin/rules", icon: Shield },
-            { title: "Branding", href: "/admin/branding", icon: Image },
+            { title: "Branding", href: "/admin/branding", icon: ImageIcon },
         ]
     },
     {

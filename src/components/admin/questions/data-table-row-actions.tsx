@@ -45,7 +45,7 @@ export function DataTableRowActions<TData>({
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[160px]">
-                <DropdownMenuItem onClick={() => router.push(`/admin/questions/${question.id}`)}>
+                <DropdownMenuItem onClick={() => router.push(`/admin/content/questions/${question.id}`)}>
                     Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigator.clipboard.writeText(question.question_text)}>

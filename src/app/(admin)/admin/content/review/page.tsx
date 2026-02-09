@@ -1,7 +1,7 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import {
     Table,
     TableBody,
@@ -30,7 +30,7 @@ export default function ReviewQueuePage() {
     const supabase = createClient()
     const { toast } = useToast()
 
-    const fetchQueue = async () => {
+    const fetchQueue = useCallback(async () => {
         setLoading(true)
         const { data, error } = await supabase
             .from('questions')
@@ -47,11 +47,11 @@ export default function ReviewQueuePage() {
 
         if (data) setQuestions(data as unknown as Question[])
         setLoading(false)
-    }
+    }, [supabase])
 
     useEffect(() => {
         fetchQueue()
-    }, [])
+    }, [fetchQueue])
 
     const handleAction = async (id: string, action: 'approve' | 'reject') => {
         const status = action === 'approve' ? 'approved' : 'rejected' // Or 'draft' to send back? Using rejected for now.

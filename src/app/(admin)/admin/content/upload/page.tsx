@@ -8,6 +8,8 @@ import { UploadCloud, FileText, Loader2, Check, AlertCircle } from 'lucide-react
 import { v4 as uuidv4 } from 'uuid'
 import { useRouter } from 'next/navigation'
 import { DragDropUpload } from '@/components/admin/upload/DragDropUpload'
+import { parseDocxAction } from './actions'
+import { useToast } from "@/components/ui/use-toast"
 
 export default function DocxUploadPage() {
     const [file, setFile] = useState<File | null>(null)
@@ -48,49 +50,23 @@ export default function DocxUploadPage() {
                                 const fileToUpload = files[0]
                                 const formData = new FormData()
                                 formData.append('file', fileToUpload)
+                                formData.append('class_id', selectedClass)
+                                formData.append('subject_id', selectedSubject)
+                                formData.append('chapter_id', selectedChapter)
+                                formData.append('topic_id', selectedTopic)
 
-                                // 1. Create upload record
-                                const { data: uploadRecord, error: uploadError } = await supabase
-                                    .from('docx_uploads')
-                                    .insert({
-                                        filename: fileToUpload.name,
-                                        status: 'processing',
-                                        uploaded_by: (await supabase.auth.getUser()).data.user?.id
-                                    })
-                                    .select()
-                                    .single()
+                                const result = await parseDocxAction(formData)
 
-                                if (uploadError) throw new Error('Failed to track upload')
-
-                                // 2. Parse (Edge Function should handle images and return structured data)
-                                const { data, error } = await supabase.functions.invoke('parse-docx', {
-                                    body: formData,
-                                })
-
-                                if (error) throw error
-
-                                if (data && data.questions) {
-                                    // 3. Insert questions linked to upload_id
-                                    const questionsToInsert = data.questions.map((q: any) => ({
-                                        ...q,
-                                        class_id: selectedClass,
-                                        subject_id: selectedSubject,
-                                        chapter_id: selectedChapter,
-                                        topic_id: selectedTopic,
-                                        status: 'approved', // Auto-approve for now, or 'pending' if we want another step
-                                        upload_id: uploadRecord.id
-                                    }))
-
-                                    const { error: insertError } = await supabase.from('questions').insert(questionsToInsert)
-                                    if (insertError) throw insertError
-
-                                    // Redirect to review page
-                                    router.push(`/admin/upload/review/${uploadRecord.id}`)
+                                if (!result.success) {
+                                    throw new Error(result.error)
                                 }
 
-                            } catch (error) {
+                                // Redirect to review page
+                                router.push(`/admin/content/upload/review/${result.uploadId}`)
+
+                            } catch (error: any) {
                                 console.error('Error:', error)
-                                alert('Failed to process file.')
+                                alert('Failed to process file: ' + error.message)
                             } finally {
                                 setParsing(false)
                             }

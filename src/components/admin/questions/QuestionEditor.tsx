@@ -104,7 +104,7 @@ export function QuestionEditor({ questionId }: { questionId: string }) {
             {/* Header */}
             <div className="h-14 border-b bg-white flex items-center justify-between px-4 sticky top-0 z-10 shrink-0">
                 <div className="flex items-center gap-4">
-                    <Link href="/admin/questions">
+                    <Link href="/admin/content/questions">
                         <Button variant="ghost" size="icon">
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
@@ -127,7 +127,7 @@ export function QuestionEditor({ questionId }: { questionId: string }) {
                         Save Draft
                     </Button>
                     <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
-                        <checkCircle className="mr-2 h-4 w-4" /> Publish
+                        <CheckCircle className="mr-2 h-4 w-4" /> Publish
                     </Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>

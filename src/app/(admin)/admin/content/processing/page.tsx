@@ -1,7 +1,7 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import {
     Table,
     TableBody,
@@ -27,7 +27,7 @@ export default function ProcessingQueuePage() {
     const [loading, setLoading] = useState(true)
     const supabase = createClient()
 
-    const fetchJobs = async () => {
+    const fetchJobs = useCallback(async () => {
         setLoading(true)
         const { data } = await supabase
             .from('docx_uploads')
@@ -36,7 +36,7 @@ export default function ProcessingQueuePage() {
 
         if (data) setJobs(data as UploadJob[])
         setLoading(false)
-    }
+    }, [supabase])
 
     useEffect(() => {
         fetchJobs()
@@ -60,7 +60,7 @@ export default function ProcessingQueuePage() {
         return () => {
             supabase.removeChannel(channel)
         }
-    }, [])
+    }, [fetchJobs, supabase])
 
     return (
         <div className="space-y-6">

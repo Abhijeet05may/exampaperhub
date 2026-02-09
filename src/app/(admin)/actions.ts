@@ -83,15 +83,15 @@ export async function createQuestion(formData: FormData) {
         throw new Error('Failed to create question')
     }
 
-    revalidatePath('/admin/questions')
-    redirect('/admin/questions')
+    revalidatePath('/admin/content/questions')
+    redirect('/admin/content/questions')
 }
 
 export async function deleteQuestion(id: string) {
     const supabase = createClient()
     const { error } = await supabase.from('questions').delete().eq('id', id)
     if (error) throw error
-    revalidatePath('/admin/questions')
+    revalidatePath('/admin/content/questions')
 }
 
 export async function savePaperData(name: string, questionIds: string[]) {
@@ -115,4 +115,22 @@ export async function savePaperData(name: string, questionIds: string[]) {
 
     revalidatePath('/saved-papers')
     return { success: true }
+}
+
+export async function reviewQuestion(questionId: string, status: 'approved' | 'rejected', feedback?: string) {
+    const supabase = createClient()
+
+    const updateData: any = { status }
+    if (feedback) updateData.feedback = feedback // Assuming a feedback column exists or we store it in metadata
+
+    const { error } = await supabase
+        .from('questions')
+        .update(updateData)
+        .eq('id', questionId)
+
+    if (error) {
+        throw new Error('Failed to update review status')
+    }
+
+    revalidatePath('/admin/content/review')
 }

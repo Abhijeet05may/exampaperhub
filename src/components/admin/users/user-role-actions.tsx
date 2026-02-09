@@ -18,7 +18,7 @@ import {
     DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu"
 import { createClient } from "@/lib/supabase/client"
-import { UserProfile } from "./columns" // Import type
+import { User as UserProfile } from "./columns" // Import type
 
 interface UserRoleActionsProps {
     row: Row<UserProfile>

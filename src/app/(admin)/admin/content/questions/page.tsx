@@ -32,7 +32,7 @@ export default async function QuestionsPage() {
                     </p>
                 </div>
                 <div className="flex items-center space-x-2">
-                    <Link href="/admin/questions/new">
+                    <Link href="/admin/content/questions/new">
                         <Button>
                             <Plus className="mr-2 h-4 w-4" /> Add Question
                         </Button>

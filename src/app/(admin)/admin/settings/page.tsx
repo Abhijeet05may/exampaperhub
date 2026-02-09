@@ -105,7 +105,7 @@ export default function SettingsPage() {
                             <div className="flex items-center justify-between">
                                 <div className="space-y-0.5">
                                     <Label className="text-base">Strict Duplicate Check</Label>
-                                    <p className="text-sm text-muted-foreground">Prevent uploading questions with >80% similarity.</p>
+                                    <p className="text-sm text-muted-foreground">Prevent uploading questions with &gt;80% similarity.</p>
                                 </div>
                                 <Switch defaultChecked />
                             </div>
