@@ -1,6 +1,6 @@
-
-import BucketSidebar from '@/components/student/BucketSidebar'
-import Link from 'next/link'
+import { StudentSidebar } from "@/components/layout/StudentSidebar"
+import { Toaster } from "@/components/ui/toaster"
+import { Navbar } from "@/components/layout/Navbar"
 
 export default function StudentLayout({
     children,
@@ -8,33 +8,16 @@ export default function StudentLayout({
     children: React.ReactNode
 }) {
     return (
-        <div className="min-h-screen bg-gray-50">
-            <header className="bg-white shadow-sm sticky top-0 z-30">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                    <div className="flex items-center">
-                        <Link href="/browse" className="text-xl font-bold text-indigo-600">
-                            ExamPaperHub
-                        </Link>
-                        <nav className="ml-10 space-x-4 hidden md:block">
-                            <Link href="/browse" className="text-gray-900 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
-                                Browse Questions
-                            </Link>
-                            <Link href="/saved-papers" className="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
-                                Saved Papers
-                            </Link>
-                        </nav>
-                    </div>
-                    <div>
-                        {/* User Profile / Logout would go here */}
-                    </div>
-                </div>
-            </header>
-
-            <main>
-                {children}
-            </main>
-
-            <BucketSidebar />
+        <div className="flex flex-col min-h-screen bg-muted/30 relative">
+            <div className="fixed inset-0 -z-10 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+            <Navbar /> {/* Student might utilize the main navbar or a specific one, keeping main for now */}
+            <div className="flex flex-1">
+                <StudentSidebar />
+                <main className="flex-1 p-8 overflow-y-auto">
+                    {children}
+                </main>
+            </div>
+            <Toaster />
         </div>
     )
 }

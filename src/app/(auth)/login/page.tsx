@@ -5,108 +5,160 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
 import { Loader2 } from 'lucide-react'
 
+import { Button } from "@/components/ui/button"
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card"
+import { useToast } from "@/hooks/use-toast"
+
+const formSchema = z.object({
+    email: z.string().email({
+        message: "Please enter a valid email address.",
+    }),
+    password: z.string().min(1, {
+        message: "Password is required.",
+    }),
+})
+
 export default function LoginPage() {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
     const router = useRouter()
     const supabase = createClient()
+    const { toast } = useToast()
+    const [isLoading, setIsLoading] = useState(false)
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setLoading(true)
-        setError(null)
+    // 1. Define your form.
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            email: "",
+            password: "",
+        },
+    })
 
+    // 2. Define a submit handler.
+    async function onSubmit(values: z.infer<typeof formSchema>) {
+        setIsLoading(true)
         try {
-            const { error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
+            const { data: { user }, error } = await supabase.auth.signInWithPassword({
+                email: values.email,
+                password: values.password,
             })
 
             if (error) throw error
 
-            router.refresh()
-            router.push('/dashboard') // Temporarily redirect to generic dashboard
-        } catch (err: any) {
-            setError(err.message)
+            if (user) {
+                // Fetch user role
+                const { data: roleData, error: roleError } = await supabase
+                    .from('user_roles')
+                    .select('role')
+                    .eq('user_id', user.id)
+                    .single()
+
+                if (roleError) {
+                    // Fallback if role is not found, though should not happen
+                    console.error('Error fetching role:', roleError)
+                    router.push('/dashboard')
+                } else {
+                    const role = roleData?.role
+                    if (role === 'admin') {
+                        router.push('/admin/dashboard')
+                    } else {
+                        router.push('/dashboard')
+                    }
+                }
+
+                toast({
+                    title: "Login successful",
+                    description: "Redirecting you to the dashboard...",
+                })
+
+                router.refresh()
+            }
+
+        } catch (error: any) {
+            toast({
+                title: "Login failed",
+                description: error.message || "Invalid credentials. Please try again.",
+                variant: "destructive",
+            })
         } finally {
-            setLoading(false)
+            setIsLoading(false)
         }
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-            <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
-                <div>
-                    <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-                        Sign in to your account
-                    </h2>
-                    <p className="mt-2 text-center text-sm text-gray-600">
-                        Or{' '}
-                        <Link href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
-                            create a new account
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+            <Card className="w-full max-w-md">
+                <CardHeader className="space-y-1">
+                    <CardTitle className="text-2xl font-bold text-center">Sign in</CardTitle>
+                    <CardDescription className="text-center">
+                        Enter your email and password to access your account
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                            <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Email</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="name@example.com" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="password"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Password</FormLabel>
+                                        <FormControl>
+                                            <Input type="password" placeholder="••••••" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <Button className="w-full" type="submit" disabled={isLoading}>
+                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Sign In
+                            </Button>
+                        </form>
+                    </Form>
+                </CardContent>
+                <CardFooter className="flex flex-col space-y-2 text-center">
+                    <p className="text-sm text-muted-foreground">
+                        Don&apos;t have an account?{" "}
+                        <Link href="/signup" className="font-medium text-primary hover:underline">
+                            Create a new account
                         </Link>
                     </p>
-                </div>
-                <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-                    <div className="-space-y-px rounded-md shadow-sm">
-                        <div>
-                            <label htmlFor="email-address" className="sr-only">
-                                Email address
-                            </label>
-                            <input
-                                id="email-address"
-                                name="email"
-                                type="email"
-                                autoComplete="email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="relative block w-full rounded-t-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                placeholder="Email address"
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="password" className="sr-only">
-                                Password
-                            </label>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                autoComplete="current-password"
-                                required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="relative block w-full rounded-b-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                placeholder="Password"
-                            />
-                        </div>
-                    </div>
-
-                    {error && (
-                        <div className="text-center text-sm text-red-600">
-                            {error}
-                        </div>
-                    )}
-
-                    <div>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="group relative flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-70"
-                        >
-                            {loading ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : null}
-                            Sign in
-                        </button>
-                    </div>
-                </form>
-            </div>
+                </CardFooter>
+            </Card>
         </div>
     )
 }

@@ -74,7 +74,8 @@ export async function createQuestion(formData: FormData) {
         subject_id,
         chapter_id,
         topic_id,
-        image_url
+        image_url,
+        status: formData.get('status') || 'draft'
     })
 
     if (error) {

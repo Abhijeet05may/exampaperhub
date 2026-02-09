@@ -8,7 +8,8 @@ export default async function CategoriesPage() {
 
     const { data: classes } = await supabase.from('classes').select('*').order('name')
     const { data: subjects } = await supabase.from('subjects').select('*, classes(name)').order('name')
-    const { data: chapters } = await supabase.from('chapters').select('*, subjects(name)').order('name')
+    const { data: books } = await supabase.from('books').select('*, subjects(name)').order('name')
+    const { data: chapters } = await supabase.from('chapters').select('*, subjects(name), books(name)').order('name')
     const { data: topics } = await supabase.from('topics').select('*, chapters(name)').order('name')
 
     return (
@@ -17,35 +18,40 @@ export default async function CategoriesPage() {
                 <h1 className="text-2xl font-bold">Category Management</h1>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <CategoryList
-                    title="Classes"
-                    type="classes"
-                    data={classes || []}
-                    parents={[]}
-                />
-                <CategoryList
-                    title="Subjects"
-                    type="subjects"
-                    data={subjects || []}
-                    parents={classes || []}
-                    parentLabel="Class"
-                />
-                <CategoryList
-                    title="Chapters"
-                    type="chapters"
-                    data={chapters || []}
-                    parents={subjects || []}
-                    parentLabel="Subject"
-                />
-                <CategoryList
-                    title="Topics"
-                    type="topics"
-                    data={topics || []}
-                    parents={chapters || []}
-                    parentLabel="Chapter"
-                />
-            </div>
+            <CategoryList
+                title="Classes"
+                type="classes"
+                data={classes || []}
+                parents={[]}
+            />
+            <CategoryList
+                title="Subjects"
+                type="subjects"
+                data={subjects || []}
+                parents={classes || []}
+                parentLabel="Class"
+            />
+            <CategoryList
+                title="Books"
+                type="books"
+                data={books || []}
+                parents={subjects || []}
+                parentLabel="Subject"
+            />
+            <CategoryList
+                title="Chapters"
+                type="chapters"
+                data={chapters || []}
+                parents={books && books.length > 0 ? books : subjects || []}
+                parentLabel={books && books.length > 0 ? "Book" : "Subject"}
+            />
+            <CategoryList
+                title="Topics"
+                type="topics"
+                data={topics || []}
+                parents={chapters || []}
+                parentLabel="Chapter"
+            />
         </div>
     )
 }

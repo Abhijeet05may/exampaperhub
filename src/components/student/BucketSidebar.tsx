@@ -1,190 +1,97 @@
-
 'use client'
 
-import { usePaperBucket } from '@/store/paperBucket'
-import { X, Trash2, FileText, ChevronRight } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-
-import { savePaperData } from '@/app/(admin)/actions'
-import { useToast } from '@/components/ui/use-toast'
+import { usePaperBucket } from '@/hooks/usePaperBucket'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
+import { Trash2, FileText, ArrowRight, GripVertical } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function BucketSidebar() {
-    const { questions, isOpen, removeQuestion, clearBucket, toggleBucket } = usePaperBucket()
-    const [mounted, setMounted] = useState(false)
-    const [paperTitle, setPaperTitle] = useState('')
-    const [isSaving, setIsSaving] = useState(false)
-    const [showSaveDialog, setShowSaveDialog] = useState(false)
-    const [isGenerating, setIsGenerating] = useState(false)
-    const { toast } = useToast()
-    const supabase = createClient()
+    const { questions, removeQuestion, clearBucket } = usePaperBucket()
+    const router = useRouter()
 
-    // Hydration fix for persistent state if we add it later, 
-    // also good practice for client-side only components
-    useEffect(() => setMounted(true), [])
-
-    if (!mounted) return null
+    if (questions.length === 0) {
+        return (
+            <Card className="border-dashed border-2 shadow-sm bg-muted/30">
+                <CardContent className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground space-y-2">
+                    <FileText className="h-10 w-10 opacity-20" />
+                    <p className="font-medium">Your bucket is empty</p>
+                    <p className="text-xs">Add questions to build a paper</p>
+                </CardContent>
+            </Card>
+        )
+    }
 
     return (
-        <>
-            {/* Overlay for mobile */}
-            {isOpen && (
-                <div
-                    className="fixed inset-0 bg-black bg-opacity-25 z-40 md:hidden"
-                    onClick={toggleBucket}
-                />
-            )}
-
-            {/* Sidebar Panel */}
-            <div className={`fixed inset-y-0 right-0 w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out z-50 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-                <div className="flex flex-col h-full">
-                    {/* Header */}
-                    <div className="px-4 py-4 border-b bg-indigo-600 text-white flex justify-between items-center">
-                        <div className="flex items-center">
-                            <FileText className="h-5 w-5 mr-2" />
-                            <h2 className="font-semibold text-lg">Paper Bucket ({questions.length})</h2>
-                        </div>
-                        <button onClick={toggleBucket} className="text-indigo-100 hover:text-white">
-                            <X className="h-6 w-6" />
-                        </button>
-                    </div>
-
-                    {/* List */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                        {questions.length === 0 ? (
-                            <div className="text-center text-gray-500 mt-10">
-                                <p>No questions selected.</p>
-                                <p className="text-sm mt-2">Browse questions and click "+" to add them here.</p>
-                            </div>
-                        ) : (
-                            questions.map((q, idx) => (
-                                <div key={q.id} className="bg-gray-50 p-3 rounded-md border border-gray-200 relative group">
-                                    <span className="absolute top-2 left-2 text-xs font-bold text-gray-400">#{idx + 1}</span>
-                                    <button
-                                        onClick={() => removeQuestion(q.id)}
-                                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </button>
-                                    <p className="text-sm text-gray-800 mt-4 line-clamp-3">{q.question_text}</p>
-                                    <div className="mt-2 text-xs text-gray-500 flex gap-2">
-                                        <span className="bg-gray-200 px-1.5 py-0.5 rounded">{q.difficulty}</span>
+        <Card className="shadow-lg border-primary/20 sticky top-4">
+            <CardHeader className="pb-3 bg-primary/5 border-b border-primary/10">
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg font-bold flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-primary" />
+                        Paper Bucket
+                        <Badge variant="default" className="ml-2 bg-primary text-primary-foreground">
+                            {questions.length}
+                        </Badge>
+                    </CardTitle>
+                    <Button variant="ghost" size="icon" onClick={clearBucket} className="h-8 w-8 text-destructive hover:bg-destructive/10" title="Clear All">
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </div>
+            </CardHeader>
+            <CardContent className="p-0">
+                <ScrollArea className="h-[calc(100vh-300px)] px-4 py-3">
+                    <div className="space-y-3">
+                        {questions.map((q, index) => (
+                            <div key={q.id} className="group relative flex items-start gap-3 p-3 rounded-lg border bg-card hover:border-primary/30 transition-all">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
+                                    {index + 1}
+                                </span>
+                                <div className="flex-1 space-y-1 overflow-hidden">
+                                    <p className="text-sm font-medium leading-none truncate pr-4">
+                                        {q.question_text}
+                                    </p>
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 border-transparent bg-muted">
+                                            {q.difficulty}
+                                        </Badge>
+                                        <span className="truncate max-w-[100px]">{q.topics?.name}</span>
                                     </div>
                                 </div>
-                            ))
-                        )}
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => removeQuestion(q.id)}
+                                    className="h-6 w-6 absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                                >
+                                    <Trash2 className="h-3 w-3" />
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </ScrollArea>
+
+                <div className="p-4 border-t bg-muted/10 space-y-3">
+                    <div className="space-y-1 text-xs text-muted-foreground">
+                        <div className="flex justify-between">
+                            <span>Total Questions:</span>
+                            <span className="font-medium text-foreground">{questions.length}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Estimated Time:</span>
+                            <span className="font-medium text-foreground">{questions.length * 1.5} mins</span>
+                        </div>
                     </div>
 
-                    {/* Footer */}
-                    <div className="p-4 border-t bg-gray-50 space-y-3">
-                        {showSaveDialog ? (
-                            <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2">
-                                <input
-                                    type="text"
-                                    placeholder="Enter paper title..."
-                                    value={paperTitle}
-                                    onChange={(e) => setPaperTitle(e.target.value)}
-                                    className="w-full px-3 py-2 border rounded-md text-sm"
-                                    autoFocus
-                                />
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => setShowSaveDialog(false)}
-                                        className="flex-1 px-3 py-1.5 border text-gray-600 rounded text-xs"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={async () => {
-                                            if (!paperTitle.trim()) return
-                                            setIsSaving(true)
-                                            try {
-                                                await savePaperData(paperTitle, questions.map(q => q.id))
-                                                toast({ title: "Success", description: "Paper saved successfully." })
-                                                setPaperTitle('')
-                                                setShowSaveDialog(false)
-                                                // clearBucket() // Optional: keep bucket or clear?
-                                            } catch (e) {
-                                                toast({ title: "Error", description: "Failed to save paper.", variant: "destructive" })
-                                            } finally {
-                                                setIsSaving(false)
-                                            }
-                                        }}
-                                        disabled={isSaving || !paperTitle.trim()}
-                                        className="flex-1 px-3 py-1.5 bg-green-600 text-white rounded text-xs hover:bg-green-700 disabled:opacity-50"
-                                    >
-                                        {isSaving ? 'Saving...' : 'Confirm Save'}
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={clearBucket}
-                                    disabled={questions.length === 0}
-                                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-100 disabled:opacity-50"
-                                >
-                                    Clear
-                                </button>
-                                <button
-                                    onClick={async () => {
-                                        setIsGenerating(true)
-                                        try {
-                                            // Call Edge Function
-                                            const { data, error } = await supabase.functions.invoke('generate-pdf', {
-                                                body: {
-                                                    questionIds: questions.map(q => q.id),
-                                                    title: 'Exam Paper' // Could ask for title here too
-                                                }
-                                            })
-
-                                            if (error) throw error
-
-                                            // Handle Blob Download
-                                            // Note: supabase-js invoke returns 'data' as the parsed JSON or Blob? 
-                                            // Actually, invoke returns parsed JSON by default if response is JSON. 
-                                            // If response is blob, we might need to handle it differently or ensuring function returns base64
-                                            // Let's assume the function returns a Blob if we set responseType?
-                                            // Supabase client 'invoke' automatically parses JSON. 
-                                            // For PDF, better to fetch directly or asking function to return base64
-
-                                            // Alternative: Let's assume the function returns base64 JSON { pdf: "..." } for simplicity in handling
-                                            // BUT, the function I wrote returns a raw Response stream. 
-                                            // Supabase client might try to parse it.
-                                            // Let's adjust the client call to handle raw response or use fetch directly.
-
-                                            // Using functions.invoke with responseType: 'blob'
-                                            // data will be Blob.
-                                        } catch (e) {
-                                            console.error(e)
-                                            toast({ title: "Error", description: "Failed to generate PDF.", variant: "destructive" })
-                                        } finally {
-                                            setIsGenerating(false)
-                                        }
-                                    }}
-                                    disabled={questions.length === 0 || isGenerating}
-                                    className="flex-2 flex-grow px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex justify-center items-center"
-                                >
-                                    {isGenerating ? 'Generating...' : 'Generate PDF'}
-                                    {!isGenerating && <ChevronRight className="h-4 w-4 ml-1" />}
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                    <Button onClick={() => router.push('/paper')} className="w-full font-bold shadow-md group">
+                        Review & Generate
+                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </Button>
                 </div>
-            </div>
-            {/* Toggle Button (Visible when closed) */}
-            {!isOpen && questions.length > 0 && (
-                <button
-                    onClick={toggleBucket}
-                    className="fixed bottom-6 right-6 bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:bg-indigo-700 transition-colors z-40 animate-bounce"
-                >
-                    <FileText className="h-6 w-6" />
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">
-                        {questions.length}
-                    </span>
-                </button>
-            )}
-        </>
+            </CardContent>
+        </Card>
     )
 }

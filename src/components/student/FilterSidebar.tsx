@@ -4,7 +4,19 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Search, Filter } from 'lucide-react'
+import { Search, Filter, RotateCcw } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
 
 export default function FilterSidebar() {
     const router = useRouter()
@@ -72,18 +84,6 @@ export default function FilterSidebar() {
         router.push(`/browse?${params.toString()}`)
     }
 
-    // Auto-apply on select change? Or manual button? Manual is better for UX to avoid jumpiness
-    // But for sidebar filters, auto-apply is common. Let's do a mix or just a "Apply" button.
-    // For now, let's use useEffect to trigger update on selection change to keep it responsive
-    // but maybe debounce if needed. Direct update is fine for this scale.
-
-    useEffect(() => {
-        // Don't trigger on initial mount unless user interacts? 
-        // Actually, standard pattern is to update URL immediately.
-        // We need to avoid infinite loops.
-        // Let's rely on explicit Apply for now to be safe, or just buttons.
-    }, [selectedClass, selectedSubject, selectedChapter, selectedTopic])
-
     const handleApply = () => {
         applyFilters()
     }
@@ -98,106 +98,108 @@ export default function FilterSidebar() {
     }
 
     return (
-        <div className="bg-white p-4 rounded-lg shadow-sm border h-fit sticky top-4">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-700 flex items-center">
-                    <Filter className="h-4 w-4 mr-2" /> Filters
-                </h3>
-                <button onClick={handleReset} className="text-xs text-indigo-600 hover:text-indigo-800">
-                    Reset
-                </button>
-            </div>
-
-            <div className="space-y-4">
+        <Card className="sticky top-4 border-none shadow-lg bg-white/80 backdrop-blur-md">
+            <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg font-bold flex items-center gap-2">
+                        <Filter className="h-5 w-5 text-primary" /> Filters
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" onClick={handleReset} className="h-8 px-2 text-xs hover:text-primary">
+                        <RotateCcw className="h-3 w-3 mr-1" /> Reset
+                    </Button>
+                </div>
+                <Separator className="mt-2" />
+            </CardHeader>
+            <CardContent className="space-y-6">
                 {/* Search */}
-                <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase">Search</label>
-                    <div className="relative mt-1">
-                        <input
+                <div className="space-y-2">
+                    <Label className="text-xs font-semibold uppercase text-muted-foreground">Search</Label>
+                    <div className="relative">
+                        <Input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleApply()}
-                            placeholder="Search keywords..."
-                            className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Keywords..."
+                            className="pl-9"
                         />
-                        <Search className="h-4 w-4 text-gray-400 absolute left-2.5 top-2.5" />
+                        <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-3" />
                     </div>
                 </div>
 
                 {/* Categories */}
-                <div className="space-y-3">
-                    <div>
-                        <label className="text-xs font-semibold text-gray-500 uppercase">Class</label>
-                        <select
-                            value={selectedClass}
-                            onChange={(e) => {
-                                setSelectedClass(e.target.value);
-                                setSelectedSubject('');
-                                setSelectedChapter('');
-                                setSelectedTopic('')
-                            }}
-                            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                        >
-                            <option value="">All Classes</option>
-                            {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <Label className="text-xs font-semibold uppercase text-muted-foreground">Class</Label>
+                        <Select value={selectedClass} onValueChange={(val) => {
+                            setSelectedClass(val);
+                            setSelectedSubject('');
+                            setSelectedChapter('');
+                            setSelectedTopic('')
+                        }}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="All Classes" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Classes</SelectItem>
+                                {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    <div>
-                        <label className="text-xs font-semibold text-gray-500 uppercase">Subject</label>
-                        <select
-                            value={selectedSubject}
-                            onChange={(e) => {
-                                setSelectedSubject(e.target.value);
-                                setSelectedChapter('');
-                                setSelectedTopic('')
-                            }}
-                            disabled={!selectedClass}
-                            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md disabled:bg-gray-100"
-                        >
-                            <option value="">All Subjects</option>
-                            {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                        </select>
+                    <div className="space-y-2">
+                        <Label className="text-xs font-semibold uppercase text-muted-foreground">Subject</Label>
+                        <Select value={selectedSubject} disabled={!selectedClass} onValueChange={(val) => {
+                            setSelectedSubject(val);
+                            setSelectedChapter('');
+                            setSelectedTopic('')
+                        }}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="All Subjects" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Subjects</SelectItem>
+                                {subjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    <div>
-                        <label className="text-xs font-semibold text-gray-500 uppercase">Chapter</label>
-                        <select
-                            value={selectedChapter}
-                            onChange={(e) => {
-                                setSelectedChapter(e.target.value);
-                                setSelectedTopic('')
-                            }}
-                            disabled={!selectedSubject}
-                            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md disabled:bg-gray-100"
-                        >
-                            <option value="">All Chapters</option>
-                            {chapters.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
+                    <div className="space-y-2">
+                        <Label className="text-xs font-semibold uppercase text-muted-foreground">Chapter</Label>
+                        <Select value={selectedChapter} disabled={!selectedSubject} onValueChange={(val) => {
+                            setSelectedChapter(val);
+                            setSelectedTopic('')
+                        }}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="All Chapters" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Chapters</SelectItem>
+                                {chapters.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    <div>
-                        <label className="text-xs font-semibold text-gray-500 uppercase">Topic</label>
-                        <select
-                            value={selectedTopic}
-                            onChange={(e) => setSelectedTopic(e.target.value)}
-                            disabled={!selectedChapter}
-                            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md disabled:bg-gray-100"
-                        >
-                            <option value="">All Topics</option>
-                            {topics.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                        </select>
+                    <div className="space-y-2">
+                        <Label className="text-xs font-semibold uppercase text-muted-foreground">Topic</Label>
+                        <Select value={selectedTopic} disabled={!selectedChapter} onValueChange={setSelectedTopic}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="All Topics" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Topics</SelectItem>
+                                {topics.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 
-                <button
-                    onClick={handleApply}
-                    className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-                >
+                <Button onClick={handleApply} className="w-full font-semibold shadow-md">
                     Apply Filters
-                </button>
-            </div>
-        </div>
+                </Button>
+            </CardContent>
+        </Card>
     )
 }
+
+

@@ -14,6 +14,7 @@ interface BaseCategory {
 interface CategoryWithParent extends BaseCategory {
     classes?: BaseCategory
     subjects?: BaseCategory
+    books?: BaseCategory
     chapters?: BaseCategory
 }
 
@@ -43,7 +44,17 @@ export default function CategoryList({ title, type, data, parents, parentLabel }
 
             // Map parent ID based on type
             if (type === 'subjects') payload.class_id = selectedParent
-            if (type === 'chapters') payload.subject_id = selectedParent
+            if (type === 'books') payload.subject_id = selectedParent
+            if (type === 'chapters') {
+                // Check if we are using books or subjects as parent
+                if (parents && parents.length > 0 && 'subject_id' in parents[0]) {
+                    // Parent is a Book (which has subject_id)
+                    payload.book_id = selectedParent
+                } else {
+                    // Parent is a Subject
+                    payload.subject_id = selectedParent
+                }
+            }
             if (type === 'topics') payload.chapter_id = selectedParent
 
             const { error } = await supabase.from(type).insert(payload)
@@ -123,6 +134,12 @@ export default function CategoryList({ title, type, data, parents, parentLabel }
                                     <span className="ml-2 text-xs text-gray-400">({item.classes.name})</span>
                                 )}
                                 {type === 'chapters' && item.subjects && (
+                                    <span className="ml-2 text-xs text-gray-400">({item.subjects.name})</span>
+                                )}
+                                {type === 'chapters' && (item as any).books && (
+                                    <span className="ml-2 text-xs text-gray-400">({(item as any).books.name})</span>
+                                )}
+                                {type === 'books' && item.subjects && (
                                     <span className="ml-2 text-xs text-gray-400">({item.subjects.name})</span>
                                 )}
                                 {type === 'topics' && item.chapters && (

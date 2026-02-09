@@ -7,30 +7,34 @@ import { createClient } from '@/lib/supabase/client'
 interface CategorySelectorProps {
     onClassChange?: (id: string) => void
     onSubjectChange?: (id: string) => void
+    onBookChange?: (id: string) => void
     onChapterChange?: (id: string) => void
     onTopicChange?: (id: string) => void
     required?: boolean
     initialData?: {
         classId?: string
         subjectId?: string
+        bookId?: string
         chapterId?: string
         topicId?: string
     }
 }
 
 export default function CategorySelector({
-    onClassChange, onSubjectChange, onChapterChange, onTopicChange,
+    onClassChange, onSubjectChange, onBookChange, onChapterChange, onTopicChange,
     required = false,
     initialData
 }: CategorySelectorProps) {
 
     const [classes, setClasses] = useState<any[]>([])
     const [subjects, setSubjects] = useState<any[]>([])
+    const [books, setBooks] = useState<any[]>([])
     const [chapters, setChapters] = useState<any[]>([])
     const [topics, setTopics] = useState<any[]>([])
 
     const [selectedClass, setSelectedClass] = useState(initialData?.classId || '')
     const [selectedSubject, setSelectedSubject] = useState(initialData?.subjectId || '')
+    const [selectedBook, setSelectedBook] = useState(initialData?.bookId || '')
     const [selectedChapter, setSelectedChapter] = useState(initialData?.chapterId || '')
     const [selectedTopic, setSelectedTopic] = useState(initialData?.topicId || '')
 
@@ -48,10 +52,10 @@ export default function CategorySelector({
     // Load Subjects when Class changes
     useEffect(() => {
         if (!selectedClass) {
-            setSubjects([]);
-            // Only reset child selection if it doesn't match the new parent context
-            // But for simplicity in this MVP, resetting is safer to avoid invalid states
-            if (selectedClass !== initialData?.classId) setSelectedSubject('')
+            setSubjects([]); setSelectedSubject('');
+            setBooks([]); setSelectedBook('');
+            setChapters([]); setSelectedChapter('');
+            setTopics([]); setSelectedTopic('');
             return
         }
         const fetchSubjects = async () => {
@@ -59,19 +63,56 @@ export default function CategorySelector({
             if (data) setSubjects(data)
         }
         fetchSubjects()
-    }, [selectedClass, initialData?.classId])
+    }, [selectedClass])
 
-    // Load Chapters when Subject changes
+    // Load Books when Subject changes
     useEffect(() => {
         if (!selectedSubject) {
-            setChapters([]); setSelectedChapter(''); return
+            setBooks([]); setSelectedBook('');
+            setChapters([]); setSelectedChapter('');
+            setTopics([]); setSelectedTopic('');
+            return
+        }
+        const fetchBooks = async () => {
+            const { data } = await supabase.from('books').select('*').eq('subject_id', selectedSubject).order('name')
+            if (data) setBooks(data)
+        }
+        fetchBooks()
+
+        // Also fetch chapters directly linked to subject (if any, or if we want to show mixed list)
+        // For now, let's assume if books exist, user should select one. If not, maybe direct chapters?
+        // To simplify: clear chapters when subject changes, wait for book selection OR if no books, maybe fetch subject chapters?
+        // Let's stick to the hierarchy: Subject -> Book (optional) -> Chapter
+        // If we want optional book, we need to handle that. 
+        // Let's fetch chapters for the subject regardless, but if a book is selected, filter by it?
+        // Actually, chapters are now either linked to book OR subject. 
+        // Let's fetch chapters that are directly linked to subject if no book selected?
+        // For simplicity in this UI, let's allow selecting a book.
+
+        const fetchChaptersDirect = async () => {
+            // Fetch chapters that belong to this subject (and optionally have no book_id if we want strict separation)
+            // But the migration didn't enforce book_id.
+            const { data } = await supabase.from('chapters').select('*').eq('subject_id', selectedSubject).is('book_id', null).order('name')
+            if (data) setChapters(data)
+        }
+        fetchChaptersDirect()
+
+    }, [selectedSubject])
+
+    // Load Chapters when Book changes
+    useEffect(() => {
+        if (!selectedBook) {
+            // If desected book, maybe go back to subject chapters? 
+            // relying on the subject effect to handle 'no book' state might be tricky if we don't trigger it.
+            // But here we can fetch chapters for either book or subject.
+            return
         }
         const fetchChapters = async () => {
-            const { data } = await supabase.from('chapters').select('*').eq('subject_id', selectedSubject).order('name')
+            const { data } = await supabase.from('chapters').select('*').eq('book_id', selectedBook).order('name')
             if (data) setChapters(data)
         }
         fetchChapters()
-    }, [selectedSubject])
+    }, [selectedBook])
 
     // Load Topics when Chapter changes
     useEffect(() => {
@@ -87,7 +128,7 @@ export default function CategorySelector({
 
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
                 <label className="block text-sm font-medium text-gray-700">Class</label>
                 <select
@@ -122,6 +163,24 @@ export default function CategorySelector({
                 >
                     <option value="">Select Subject</option>
                     {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium text-gray-700">Book (Optional)</label>
+                <select
+                    name="book_id"
+                    value={selectedBook}
+                    onChange={(e) => {
+                        const val = e.target.value
+                        setSelectedBook(val)
+                        onBookChange?.(val)
+                    }}
+                    disabled={!selectedSubject}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2 disabled:bg-gray-100"
+                >
+                    <option value="">Select Book</option>
+                    {books.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
             </div>
 

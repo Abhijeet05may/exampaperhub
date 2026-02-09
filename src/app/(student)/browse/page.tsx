@@ -1,8 +1,9 @@
-
 import { Suspense } from 'react'
 import FilterSidebar from '@/components/student/FilterSidebar'
 import QuestionList from '@/components/student/QuestionList'
+import BucketSidebar from '@/components/student/BucketSidebar'
 import { createClient } from '@/lib/supabase/server'
+import { Separator } from "@/components/ui/separator"
 
 interface BrowsePageProps {
     searchParams: {
@@ -33,20 +34,33 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
     const { data: questions } = await query.order('created_at', { ascending: false }).limit(100)
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="md:col-span-1">
+        <div className="container py-8 max-w-7xl mx-auto">
+            <div className="flex flex-col space-y-4 lg:flex-row lg:space-x-8 lg:space-y-0">
+                {/* Left: Filters */}
+                <aside className="w-full lg:w-1/5 order-2 lg:order-1">
                     <Suspense fallback={<div>Loading filters...</div>}>
                         <FilterSidebar />
                     </Suspense>
-                </div>
-                <div className="md:col-span-3">
-                    <h1 className="text-2xl font-bold text-gray-900 mb-6">Browse Questions</h1>
+                </aside>
+
+                {/* Middle: Questions */}
+                <div className="flex-1 order-3 lg:order-2">
+                    <div className="mb-6">
+                        <h1 className="text-3xl font-bold tracking-tight">Browse Questions</h1>
+                        <p className="text-muted-foreground">
+                            Explore and filter questions to build your exam paper.
+                        </p>
+                    </div>
+                    <Separator className="my-6" />
                     <Suspense fallback={<div>Loading questions...</div>}>
-                        {/* Pass simple array, ensure types match or use any for MVP speed */}
                         <QuestionList initialQuestions={questions || []} />
                     </Suspense>
                 </div>
+
+                {/* Right: Bucket */}
+                <aside className="w-full lg:w-1/4 order-1 lg:order-3">
+                    <BucketSidebar />
+                </aside>
             </div>
         </div>
     )

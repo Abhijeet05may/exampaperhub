@@ -1,9 +1,13 @@
-
 'use client'
 
 import { useState } from 'react'
 import { createQuestion } from '@/app/(admin)/actions'
-import CategorySelector from './CategorySelector'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
+import CategorySelector from "./CategorySelector"
 import { createClient } from '@/lib/supabase/client'
 import { v4 as uuidv4 } from 'uuid'
 import { Loader2, UploadCloud } from 'lucide-react'
@@ -44,29 +48,28 @@ export default function QuestionForm() {
     }
 
     return (
-        <form action={createQuestion} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
+        <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
             <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Question Details</h3>
                 <CategorySelector required />
             </div>
 
-            <div className="border-t pt-6">
-                <label className="block text-sm font-medium text-gray-700">Question Text</label>
-                <textarea
-                    name="question_text"
-                    rows={3}
-                    required
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
-                />
-            </div>
+            <div className="space-y-4">
+                <div>
+                    <Label htmlFor="question_text">Question Text</Label>
+                    <RichTextEditor
+                        value={formData.question_text}
+                        onChange={(value) => setFormData({ ...formData, question_text: value })}
+                    />
+                </div>
 
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Explanation</label>
-                <textarea
-                    name="explanation"
-                    rows={2}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
-                />
+                <div>
+                    <Label htmlFor="explanation">Explanation</Label>
+                    <RichTextEditor
+                        value={formData.explanation}
+                        onChange={(value) => setFormData({ ...formData, explanation: value })}
+                    />
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -135,11 +138,26 @@ export default function QuestionForm() {
                 </div>
             </div>
 
-            <div className="flex justify-end border-t pt-6">
+            <div className="flex items-center justify-between border-t pt-6">
+                <div className="flex items-center gap-4">
+                    <label className="text-sm font-medium text-gray-700">Status</label>
+                    <select
+                        name="status"
+                        className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                        defaultValue="draft"
+                    >
+                        <option value="draft">Save as Draft</option>
+                        <option value="review">Submit for Review</option>
+                        {/* Admin override could go here if we check roles */}
+                        <option value="approved">Directly Approve (Admin)</option>
+                    </select>
+                </div>
                 <button
                     type="submit"
-                    className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    disabled={loading}
+                    className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
                 >
+                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     Save Question
                 </button>
             </div>
